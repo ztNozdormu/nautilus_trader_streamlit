@@ -1,7 +1,7 @@
 from __future__ import annotations
-
+# MovingAverageConvergenceDivergence
 from nautilus_trader.core.message import Event
-from nautilus_trader.indicators.macd import MovingAverageConvergenceDivergence
+from nautilus_trader.indicators.averages import AdaptiveMovingAverage
 from nautilus_trader.model.enums import OrderSide, PositionSide, PriceType
 from nautilus_trader.model.events import PositionOpened
 from nautilus_trader.model.identifiers import InstrumentId
@@ -29,7 +29,7 @@ class MACDStrategy(Strategy):
     def __init__(self, config: MACDConfig):
         super().__init__(config)
         # Initialize MACD indicator on mid price
-        self.macd = MovingAverageConvergenceDivergence(
+        self.macd = AdaptiveMovingAverage(
             fast_period=config.fast_period,
             slow_period=config.slow_period,
             price_type=PriceType.MID,

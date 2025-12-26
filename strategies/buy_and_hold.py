@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from decimal import Decimal
 from typing import Optional
 
@@ -39,7 +40,14 @@ class BuyAndHoldStrategy(Strategy):
             self.log.error(f"{self.config.instrument_id} not found – stopping strategy")
             self.stop(); return
 
-        self.request_bars(self.config.bar_type)
+        start_time = self.clock.utc_now() - timedelta(minutes=100)
+
+        self.request_bars(
+            bar_type=self.config.bar_type,
+            start=start_time,
+            end=None,  # 到当前时间
+        )
+
         self.subscribe_bars(self.config.bar_type)
 
     def on_bar(self, bar: Bar) -> None:

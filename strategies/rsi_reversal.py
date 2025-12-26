@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+from datetime import timedelta
+
 """RSI‑Reversal strategy for Nautilus‑Trader ≥ 1.150
 
 Trading rules
@@ -31,7 +34,7 @@ except ImportError:
 except ImportError:  # fallback for older wheels (shouldn’t be needed)
     from nautilus_trader.data import RequestBars  # type: ignore
 from nautilus_trader.core.uuid import UUID4
-from nautilus_trader.indicators.base.indicator import Indicator
+from nautilus_trader.indicators.base import Indicator
 from nautilus_trader.model import Bar, BarType
 from nautilus_trader.model.enums import OrderSide, TimeInForce
 from nautilus_trader.model.identifiers import InstrumentId
@@ -132,19 +135,25 @@ class RSIReversal(Strategy):
         # Warm‑up history: call signature differs by version
         if RequestBars is not None:
             try:
-                seed_req = RequestBars(
-                    self.config.bar_type,
-                    None,
-                    None,
-                    self.rsi.period,
-                    None,
-                    self.instrument.venue,
-                    lambda _bars: None,
-                    UUID4(),
-                    int(time.time_ns()),
-                    None,
+                # seed_req = RequestBars(
+                #     self.config.bar_type,
+                #     None,
+                #     None,
+                #     self.rsi.period,
+                #     None,
+                #     self.instrument.venue,
+                #     lambda _bars: None,
+                #     UUID4(),
+                #     int(time.time_ns()),
+                #     None,
+                # )
+                start_time = self.clock.utc_now() - timedelta(minutes=100)
+
+                self.request_bars(
+                    bar_type=self.config.bar_type,
+                    start=start_time,
+                    end=None,  # 到当前时间
                 )
-                self.request_bars(seed_req)
             except (TypeError, ValueError):  # fallback if wrong signature
                 self.request_bars(self.config.bar_type)
         else:

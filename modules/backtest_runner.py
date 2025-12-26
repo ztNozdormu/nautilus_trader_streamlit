@@ -646,7 +646,7 @@ def run_backtest(
                 account_obj = None
                 try:
                     # Assume the trader has a get_account method
-                    account_obj = trader.get_account(Venue("BINANCE"))
+                    account_obj = engine.cache.account_for_venue(Venue("BINANCE"))  #trader.get_account(Venue("BINANCE"))
                 except Exception:
                     # Fallback: look for accounts in trader attributes
                     accounts = getattr(trader, "accounts", None)
@@ -672,14 +672,20 @@ def run_backtest(
                     positions,
                 )
                 # Get equity curve and stats from the analyzer
-                equity_df = analyzer.equity_curve().to_frame(name="equity")
+                # 正确的方式：获取收益数据
+                returns = analyzer.returns()  # 返回 pandas Series
+                # 转换为权益曲线
+                equity_curve = (1 + returns).cumprod()
+                equity_df = equity_curve.to_frame(name="equity")
                 if not equity_df.empty:
                     equity_df.index = pd.to_datetime(equity_df.index)
                     if getattr(equity_df.index, "tz", None) is not None:
                         equity_df.index = equity_df.index.tz_convert(None)
                     equity_df.sort_index(inplace=True)
                 ret_stats = analyzer.get_performance_stats_returns()
-                pnl_stats = analyzer.get_performance_stats_pnls()
+                # Iterate through currencies and get stats for each
+                for currency in portfolio.analyzer.currencies:
+                    pnl_stats = analyzer.get_performance_stats_pnls(currency)
                 gen_stats = analyzer.get_performance_stats_general()
 
                 # Recalculate max drawdown based on analyzer equity curve
@@ -694,7 +700,7 @@ def run_backtest(
                 _logger.warning("Falling back to manual equity calculation.")
                 start_balance = 10_000.0
                 try:
-                    account_obj = trader.get_account(Venue("BINANCE"))
+                    account_obj = engine.cache.account_for_venue(Venue("BINANCE")) # trader.get_account(Venue("BINANCE"))
                     bal = getattr(account_obj, "cash_balance", None)
                     if callable(bal):
                         start_balance = float(bal(USDT).as_double())
@@ -790,7 +796,7 @@ def run_backtest(
     commissions: Dict[str, float] = {}
     if trader is not None:
         try:
-            account_obj = trader.get_account(Venue("BINANCE"))
+            account_obj = engine.cache.account_for_venue(Venue("BINANCE")) #trader.get_account(Venue("BINANCE"))
             if account_obj is not None and hasattr(account_obj, "commissions"):
                 # commissions() returns dict[Currency, Money]
                 comms = account_obj.commissions()
