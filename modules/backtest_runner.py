@@ -235,7 +235,7 @@ def _init_engine(instr, bars, balance: float = 10_000.0) -> BacktestEngine:
         starting_balances=[
             Money(Decimal(str(balance)), USDT),
             # second balance in BTC (0 is enough) enables shorting
-            Money(Decimal("0"), BTC),
+            Money(Decimal("100"), BTC),
         ],
         base_currency=None,
     )
